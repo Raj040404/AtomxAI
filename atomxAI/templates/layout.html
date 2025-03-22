@@ -9,9 +9,10 @@
     <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@48,400,0,0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Permanent+Marker&display=swap" rel="stylesheet">
+    <!-- Simplified to Open Sans only for minimalism -->
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{% static 'style.css' %}">
-    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css"> <!-- Toastr CSS -->
+    <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/css/toastr.min.css">
     {% block extra_head %}{% endblock %}
 </head>
 <body>
@@ -27,46 +28,43 @@
                 <li><a href="#info">Info</a></li>
                 <li><a href="#about">About</a></li>
                 <li><a href="#contact">Contact</a></li>
-                <li><a href="{% url "monitor" %}">Join Exam</a></li>
-
+                <li><a href="{% url 'monitor' %}">Join Exam</a></li>
                 {% if user.is_authenticated %}
                 <li><a href="{% url 'dashboard' %}">Dashboard</a></li>
                 {% endif %}
             </ul>
-            
             {% if user.is_authenticated %}
-            <!-- Logout button -->
             <form method="POST" action="{% url 'logout' %}">
                 {% csrf_token %}
                 <button class="login-btn" type="submit">LOGOUT</button>
             </form>
             {% else %}
-            <!-- Login button that triggers login form popup -->
             <button class="login-btn">LOGIN</button>
             {% endif %}
         </nav>
     </header>
 
-    <main>
+    <!-- Added container for centered content -->
+    <main class="container">
         <div class="home" id="home">
             {% block home %}
                 {% include "website/home.html" %}
-            {% endblock  %}
+            {% endblock %}
         </div>
         <div class="info" id="info">
             {% block info %}
                 {% include "website/info.html" %}
-            {% endblock  %}
+            {% endblock %}
         </div>
         <div class="about" id="about">
             {% block about %}
                 {% include "website/about.html" %}
-            {% endblock  %}
+            {% endblock %}
         </div>
         <div class="contact" id="contact">
             {% block contact %}
                 {% include "website/contact.html" %}
-            {% endblock  %}    
+            {% endblock %}
         </div>
     </main>
 
@@ -76,45 +74,34 @@
         </div>
     </footer>
 
-
     {% block registration %}
         {% include "website/registration.html" %}
-    {% endblock  %}
+    {% endblock %}
 
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script> <!-- jQuery -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script> <!-- Toastr JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/js/toastr.min.js"></script>
     <script src="{% static 'script.js' %}"></script>
 
     <script type="text/javascript">
         $(document).ready(function() {
             toastr.options = {
                 'closeButton': true,
-                'debug': false,
-                'newestOnTop': false,
-                'progressBar': false,
                 'positionClass': 'toast-top-right',
-                'preventDuplicates': false,
                 'showDuration': '1000',
                 'hideDuration': '1000',
                 'timeOut': '5000',
-                'extendedTimeOut': '1000',
                 'showEasing': 'swing',
                 'hideEasing': 'linear',
                 'showMethod': 'fadeIn',
                 'hideMethod': 'fadeOut',
             };
-
-            // Display messages if they exist
             {% if messages %}
                 {% for message in messages %}
                     toastr.{{ message.tags }}('{{ message }}');
                 {% endfor %}
             {% endif %}
-        });
 
-        $(document).ready(function() {
-            // Smooth scrolling for navbar links
+            // Smooth scrolling
             $('a[href^="#"]').on('click', function(event) {
                 var target = $(this.getAttribute('href'));
                 if (target.length) {
@@ -124,8 +111,23 @@
                     }, 1000);
                 }
             });
+
+            // Animation on scroll
+            function isInView(el) {
+                var rect = el.getBoundingClientRect();
+                return rect.top < window.innerHeight && rect.bottom >= 0;
+            }
+            function checkAnimations() {
+                $('.animate-on-view').each(function() {
+                    if (isInView(this) && !$(this).hasClass('animated')) {
+                        var animation = $(this).data('animation');
+                        $(this).addClass(animation).addClass('animated');
+                    }
+                });
+            }
+            $(window).on('scroll', checkAnimations);
+            checkAnimations();
         });
-        
     </script>
 </body>
 </html>

@@ -7,29 +7,55 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Monitor - Start Exam</title>
     <link rel="stylesheet" href="{% static 'monitor.css' %}">
+    <!-- Google Fonts for Open Sans -->
+    <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+    <!-- jQuery for animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.2.1/jquery.min.js"></script>
 </head>
 <body>
-    <div class="exam">
-        <div class="inputForm">
+    <div class="exam container">
+        <div class="inputForm animate-on-view" data-animation="scale-up">
             <h2>Enter Exam Room</h2>
             <form method="POST">
                 {% csrf_token %}
-                <label for="name">Name:</label>
-                <input type="text" name="name" id="name" required><br><br>
-                
-                <label for="roll_number">Roll Number:</label>
-                <input type="text" name="roll_number" id="roll_number" required><br><br>
-                
-                <label for="room_code">Room Code:</label>
-                <input type="text" name="room_code" id="room_code" required><br><br>
-                
+                <div class="input-field">
+                    <input type="text" name="name" id="name" required>
+                    <label for="name">Name</label>
+                </div>
+                <div class="input-field">
+                    <input type="text" name="roll_number" id="roll_number" required>
+                    <label for="roll_number">Roll Number</label>
+                </div>
+                <div class="input-field">
+                    <input type="text" name="room_code" id="room_code" required>
+                    <label for="room_code">Room Code</label>
+                </div>
                 <button type="submit">Start Exam</button>
             </form>
-            
             {% if error %}
-            <p style="color: red;">{{ error }}</p>
+            <p class="error">{{ error }}</p>
             {% endif %}
         </div>
     </div>
+
+    <script type="text/javascript">
+        $(document).ready(function() {
+            // Animation on scroll
+            function isInView(el) {
+                var rect = el.getBoundingClientRect();
+                return rect.top < window.innerHeight && rect.bottom >= 0;
+            }
+            function checkAnimations() {
+                $('.animate-on-view').each(function() {
+                    if (isInView(this) && !$(this).hasClass('animated')) {
+                        var animation = $(this).data('animation');
+                        $(this).addClass(animation).addClass('animated');
+                    }
+                });
+            }
+            $(window).on('scroll', checkAnimations);
+            checkAnimations();
+        });
+    </script>
 </body>
 </html>

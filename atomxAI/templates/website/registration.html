@@ -7,7 +7,7 @@
             <h2>LOGIN</h2>
             <form class="userForm" method="POST" action="">
                 {% csrf_token %}
-                <input type="hidden" name="login" value="login"> <!-- Hidden input to differentiate form -->
+                <input type="hidden" name="login" value="login">
                 <div class="input-field">
                     <input type="text" name="username" required>
                     <label>Username</label>
@@ -32,7 +32,7 @@
             <h2>SIGNUP</h2>
             <form class="userForm" method="POST" action="">
                 {% csrf_token %}
-                <input type="hidden" name="signup" value="signup"> <!-- Hidden input to differentiate form -->
+                <input type="hidden" name="signup" value="signup">
                 <div class="input-field">
                     <input type="text" name="username" required>
                     <label>Create username</label>
