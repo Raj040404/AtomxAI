@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Start Exam</title>
+    <link rel="stylesheet" href="{% static 'start_exam.css' %}">
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/blazeface"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd"></script>
+    <script src="{% static 'start_exam.js' %}" defer></script>
+</head>
+<body>
+    <h2>Start Exam</h2>
+
+
+    <div class="loader" id="loadingBar"></div>
+
+    <div id="timer" style="display: none;">
+        Time Remaining: <span id="timeRemaining">00:00</span>
+    </div>
+    
+
+    <div style="display: none;" id="contentContainer"> 
+        <div id="video-container" style="flex: 1; padding-right: 20px;">
+            <video id="videoElement" playsinline autoplay muted></video>
+            <div id="status">Loading AI models...</div>
+            <div id="log">Activity Log:</div>
+        </div>
+        <div id="googleFormContainer" style="display: none;">
+            <iframe src="{{ google_form_link }}" width="100%" height="600" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
+        </div>
+    </div>
+
+    <br>
+    <button id="startExamButton" style="display: none;">Start Exam</button> 
+    <button id="endExamButton" style="display: none;">End Exam</button> 
+
+    <p>Good luck!</p>
+
+    <script>
+        let timerDuration = {{ exam_duration }} * 60;
+
+        document.getElementById('endExamButton').addEventListener('click', function() {
+            const roomCode = "{{ room_code }}";
+            const rollNumber = "{{ roll_number }}";
+
+            // Prepare form data
+            const formData = new FormData();
+            formData.append('log', JSON.stringify(logArray));
+            formData.append('roll_number', rollNumber);
+            formData.append('room_code', roomCode);
+
+            // Send logs to the server
+            fetch(`{% url 'end_exam' room_code=room_code roll_number=roll_number %}`, {
+                method: 'POST',
+                body: formData
+            }).then(response => {
+                if (response.ok) {
+                    // Redirect to login/signup view after successful exam completion
+                    window.location.href = "{% url 'login_signup_view' %}";
+                } else {
+                    console.error('Failed to send logs:', response.statusText); 
+                }
+            }).catch(error => {
+                console.error('Error occurred while sending logs:', error);
+            });
+
+        });
+    </script>
+</body>
+</html>

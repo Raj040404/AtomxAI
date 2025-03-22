@@ -1,0 +1,35 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monitor - Start Exam</title>
+    <link rel="stylesheet" href="{% static 'monitor.css' %}">
+</head>
+<body>
+    <div class="exam">
+        <div class="inputForm">
+            <h2>Enter Exam Room</h2>
+            <form method="POST">
+                {% csrf_token %}
+                <label for="name">Name:</label>
+                <input type="text" name="name" id="name" required><br><br>
+                
+                <label for="roll_number">Roll Number:</label>
+                <input type="text" name="roll_number" id="roll_number" required><br><br>
+                
+                <label for="room_code">Room Code:</label>
+                <input type="text" name="room_code" id="room_code" required><br><br>
+                
+                <button type="submit">Start Exam</button>
+            </form>
+            
+            {% if error %}
+            <p style="color: red;">{{ error }}</p>
+            {% endif %}
+        </div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<div class="form-popup">
+    <span class="close-btn material-symbols-rounded">close</span>
+
+    <!-- Login Form -->
+    <div class="form-box login">
+        <div class="form-content">
+            <h2>LOGIN</h2>
+            <form class="userForm" method="POST" action="">
+                {% csrf_token %}
+                <input type="hidden" name="login" value="login"> <!-- Hidden input to differentiate form -->
+                <div class="input-field">
+                    <input type="text" name="username" required>
+                    <label>Username</label>
+                </div>
+                <div class="input-field">
+                    <input type="password" name="password" required>
+                    <label>Password</label>
+                </div>
+                <a href="#" class="forgot-pass-link">Forgot password?</a>
+                <button type="submit">Log In</button>
+            </form>
+            <div class="bottom-link">
+                Don't have an account?
+                <a href="#" id="signup-link">Signup</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Signup Form -->
+    <div class="form-box signup">
+        <div class="form-content">
+            <h2>SIGNUP</h2>
+            <form class="userForm" method="POST" action="">
+                {% csrf_token %}
+                <input type="hidden" name="signup" value="signup"> <!-- Hidden input to differentiate form -->
+                <div class="input-field">
+                    <input type="text" name="username" required>
+                    <label>Create username</label>
+                </div>
+                <div class="input-field">
+                    <input type="password" name="password" required>
+                    <label>Create password</label>
+                </div>
+                <button type="submit">Sign Up</button>
+            </form>
+            <div class="bottom-link">
+                Already have an account? 
+                <a href="#" id="login-link">Login</a>
+            </div>
+        </div>
+    </div>
+</div>

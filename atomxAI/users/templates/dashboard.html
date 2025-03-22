@@ -1,0 +1,377 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Boxicons -->
+    <link
+      href="https://unpkg.com/boxicons@2.0.9/css/boxicons.min.css"
+      rel="stylesheet"
+    />
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="{% static 'dashboard.css' %}" />
+    {% block extra_head %}{% endblock %}
+  </head>
+  <body>
+    <!-- SIDEBAR -->
+    <section id="sidebar">
+      <a href="#" class="brand">
+        <i class="bx bxs-video"></i>
+        <span class="text">AtomX AI</span>
+      </a>
+      <ul class="side-menu top">
+        <li class="active">
+          <a href="#" id="dashboard-link">
+            <i class="bx bxs-dashboard"></i>
+            <span class="text">Dashboard</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" id="create-exam-room-link">
+            <i class="bx bxs-edit"></i>
+            <span class="text">Create Exam Room</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" id="manage-student-link">
+            <i class="bx bxs-doughnut-chart"></i>
+            <span class="text">Manage Students</span>
+          </a>
+        </li>
+        <li>
+          <a href="#" id="log-reports-link">
+            <i class="bx bxs-message-dots"></i>
+            <span class="text">Logs and Reports</span>
+          </a>
+        </li>
+      </ul>
+      <ul class="side-menu">
+        <li>
+          <form
+            method="POST"
+            style="display: inline"
+            action="{% url 'logout' %}"
+          >
+            {% csrf_token %}
+            <button
+              type="submit"
+              class="logout"
+              style="background: none; border: none; cursor: pointer"
+            >
+              <i class="bx bxs-log-out-circle"></i>
+              <span class="text">Logout</span>
+            </button>
+          </form>
+        </li>
+      </ul>
+    </section>
+    <!-- SIDEBAR -->
+
+    <!-- CONTENT -->
+    <section id="content">
+      <!-- MAIN -->
+      <main id="main-content">
+        <!-- Dashboard Content -->
+        <div id="dashboard-content">
+          <div class="head-title">
+            <div class="left">
+              <h1>Dashboard</h1>
+              <ul class="breadcrumb">
+                <li>
+                  <a class="active" href="{% url 'login_signup_view' %}"
+                    >Home</a
+                  >
+                </li>
+                <li><i class="bx bx-chevron-right"></i></li>
+                <li>
+                  <a href="#">Dashboard</a>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <ul class="box-info">
+            <li>
+              <i class="bx bxs-calendar-check"></i>
+              <span class="text">
+                <h3>{{ total_exam_rooms }}</h3>
+                <p>Exam Created</p>
+              </span>
+            </li>
+            <li>
+              <i class="bx bxs-group"></i>
+              <span class="text">
+                <h3>{{ total_students }}</h3>
+                <p>Total Students</p>
+              </span>
+            </li>
+            <li>
+              <i class="bx bxs-time-five"></i>
+              <span class="text">
+                <h3>{{ active_exams }}</h3>
+                <p>Active Exam</p>
+              </span>
+            </li>
+          </ul>
+
+          <div class="table-data">
+            <div class="recent">
+              <div class="head">
+                <h3>Recent</h3>
+              </div>
+              <table>
+                <thead>
+                  <tr>
+                    <th>Student</th>
+                    <th>Roll No.</th>
+                    <th>Date</th>
+                    <th>Score</th>
+                    <th>Warnings</th>
+                  </tr>
+                </thead>
+                {% for student in recent_exams %}
+                <tr>
+                  <td><i class="bx bxs-user"></i> <p>{{ student.name }}</p></td>
+                  <td>{{ student.roll_number }}</td>
+                  <td>{{ student.date }}</span></td>
+                  <td>{{ student.score }}</td>
+                  <td>{{ student.warnings }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="7">No recent students found.</td>
+                </tr>
+                {% endfor %}
+              </table>
+            </div>
+            <div class="exam">
+              <div class="head">
+                <h3>Exam Room</h3>
+              </div>
+              <ul class="exam-list">
+                {% for exam_room in exam_rooms %}
+                <li class="completed">
+                  <p>{{ exam_room.name }}</p>
+                
+                  {% comment %} <a href="#"><i class="bx bx-dots-vertical-rounded"></i></a> {% endcomment %}
+                </li>
+                {% empty %}
+                <li>No exam rooms created.</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Create Exam Room Content -->
+        <div id="create-exam-room-content" style="display: none">
+          <div class="head-title">
+            <div class="left">
+              <h1>Create Exam Room</h1>
+            </div>
+          </div>
+          <div class="table-data">
+            <div class="recent" id="exam-room-table">
+              <form method="POST">
+                {% csrf_token %}
+                {{ form.as_p }}  <!-- Render the form fields -->
+                <button type="submit">Create Room</button>
+            </form>
+            </div>
+            <div class="exam">
+              <div class="head">
+                <h3>Exam Room</h3>
+              </div>
+              <ul class="exam-list">
+                {% for exam_room in exam_rooms %}
+                <li class="completed">
+                  <p>{{ exam_room.name }} code: {{ exam_room.unique_code }}</p>
+                  <a href="{% url 'delete_exam_room' exam_room.id %}" onclick="return confirm('Are you sure you want to delete this exam room?');">
+                    <i class="bx bx-trash" style="color: red;  font-size: 25px;"></i>
+
+                </a>
+                </li>
+                {% empty %}
+                <li>No exam rooms created.</li>
+                {% endfor %}
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Manage Student Content -->
+        <div id="manage-student-content" style="display: none">
+          <div class="head-title">
+            <div class="left">
+              <h1>Manage Student</h1>
+            </div>
+          </div>
+
+          <div class="table-data">
+            <div class="recent">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Exam Name</th>
+                    <th>Student</th>
+                    <th>Roll No.</th>
+                    <th>Date</th>
+                    <th>Score</th>
+                    <th>Warnings</th>
+                  </tr>
+                </thead>
+                {% for student in recent_exams %}
+                <tr>
+                  <td>{{ student.exam_room.name }}</td> 
+                  <td><i class="bx bxs-user"></i> <p>{{ student.name }}</p></td>
+                  <td>{{ student.roll_number }}</td>
+                  <td>{{ student.date }}</span></td>
+                  <td>{{ student.score }}</td>
+                  <td>{{ student.warnings }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="7">No students found.</td>
+                </tr>
+                {% endfor %}
+              </table>
+            </div>
+          </div>
+        </div>
+
+<!-- Log and Reports Content -->
+<div id="log-reports-content" style="display: none;">
+  <div class="head-title">
+      <div class="left">
+          <h1>Log and Reports</h1>
+      </div>
+  </div>
+
+  <div class="table-data">
+      <div class="recent">
+          <table>
+              <thead>
+                  <tr>
+                      <th>Name</th>
+                      <th>Warnings</th>
+                  </tr>
+              </thead>
+              <tbody>
+                  {% for student in recent_exams %}
+                  <tr>
+                      <td>
+                          <i class="bx bxs-user"></i>
+                          <p>
+                              <a href="javascript:void(0)" class="show-logs" 
+                                 data-student-name="{{student.name}}">
+                                 {{ student.name }} <!-- Display only the student name -->
+                              </a>
+                          </p>
+                      </td>
+                      <td>{{ student.warnings }}</td>
+                  </tr>
+                  {% empty %}
+                  <tr>
+                      <td colspan="2">No students found.</td>
+                  </tr>
+                  {% endfor %}
+              </tbody>
+          </table>
+      </div>
+      <div class="exam">
+          <div class="head">
+            <h3 style="font-size: 20px; font-weight: 600">Logs for <span id="student-name"></span></h3>
+              
+          </div>
+          <div class="log-details">
+              <table id="log-table" style="display: none;">
+                  <thead>
+                      <tr>
+                          <th>Messages</th>
+                      </tr>
+                  </thead>
+                  <tbody id="log-list">
+                  </tbody>
+              </table>
+              <div id="no-logs-message" style="display: none;">No logs found for this student.</div>
+          </div>
+      </div>
+  </div>
+</div>
+
+
+      </main>
+    </section>
+    <script>
+      document.addEventListener('DOMContentLoaded', function () {
+          const logLinks = document.querySelectorAll('.show-logs');
+
+          logLinks.forEach(link => {
+              link.addEventListener('click', function (event) {
+                  event.preventDefault(); // Prevent the default link behavior
+                  const studentName = this.getAttribute('data-student-name');
+                  displayLogs(studentName);
+              });
+          });
+
+          function displayLogs(studentName) {
+              const logList = document.getElementById('log-list');
+              const logTable = document.getElementById('log-table');
+              const noLogsMessage = document.getElementById('no-logs-message');
+              const studentNameDisplay = document.getElementById('student-name');
+
+              logList.innerHTML = ''; // Clear previous logs
+              logTable.style.display = 'none'; // Hide the log table initially
+              noLogsMessage.style.display = 'none'; // Hide the no logs message
+
+              if (studentNameDisplay) {
+                  studentNameDisplay.textContent = studentName; // Display the student name
+              } else {
+                  console.error('student-name element not found');
+              }
+
+              // Fetch logs from the API
+              fetch(`logs?studentName=${encodeURIComponent(studentName)}`)
+                  .then(response => {
+                      if (!response.ok) {
+                          throw new Error('Network response was not ok');
+                      }
+                      return response.json();
+                  })
+                  .then(data => {
+                      const logs = data.logs; // Assume your API returns logs in this format
+                      if (logs && logs.length > 0) {
+                          logTable.style.display = 'table'; // Show the log table
+                          logs.forEach(log => {
+                              const logEntry = document.createElement('tr');
+                              const messageCell = document.createElement('td');
+
+                              messageCell.textContent = log; // Use the actual log entry
+
+                              logEntry.appendChild(messageCell);
+                              logList.appendChild(logEntry);
+                          });
+                      } else {
+                          noLogsMessage.style.display = 'block'; // Show no logs message
+                      }
+                  })
+                  .catch(error => {
+                      console.error('There was a problem with the fetch operation:', error);
+                  });
+
+              document.getElementById('logs-container').style.display = 'block'; // Show the logs container
+          }
+
+          const firstStudent = logLinks[0]; // Get the first student link
+          if (firstStudent) {
+          const firstStudentName = firstStudent.getAttribute('data-student-name');
+          displayLogs(firstStudentName); // Display logs for the first student
+    }
+
+      });
+  </script>
+
+    <script src="{% static 'dashboard.js' %}"></script>
+  </body>
+</html>

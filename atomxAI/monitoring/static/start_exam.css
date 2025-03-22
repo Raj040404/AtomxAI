@@ -1,0 +1,91 @@
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f0f0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px;
+}
+
+h2 {
+  color: #333;
+}
+
+#videoElement {
+  border: 2px solid #000;
+  width: 640px;
+  height: 480px;
+}
+
+#status {
+  margin-top: 10px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+#log {
+  margin-top: 10px;
+  width: 640px;
+  max-height: 150px;
+  overflow-y: auto;
+  border: 1px solid #ccc;
+  background-color: #fff;
+  padding: 10px;
+}
+
+.log-entry {
+  margin-bottom: 5px;
+  font-size: 14px;
+}
+
+.severity-high {
+  color: red;
+  font-weight: bold;
+}
+
+.severity-medium {
+  color: orange;
+  font-weight: bold;
+}
+
+.severity-low {
+  color: green;
+}
+
+#googleFormContainer {
+  user-select: none; /* Disable text selection */
+  -webkit-user-select: none; /* For Chrome, Safari, Opera */
+  -moz-user-select: none; /* For Firefox */
+  -ms-user-select: none; /* For IE and Edge */
+}
+
+/* HTML: <div class="loader"></div> */
+.loader {
+  height: 4px;
+  width: 130px;
+  --c: no-repeat linear-gradient(#6100ee 0 0);
+  background: var(--c), var(--c), #d7b8fc;
+  background-size: 200% 100%;
+  animation: load 1s infinite;
+}
+
+@keyframes load {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
+}
+
+.severity-high {
+  color: red;
+}
+
+.severity-medium {
+  color: orange;
+}
+
+.severity-low {
+  color: green;
+}
