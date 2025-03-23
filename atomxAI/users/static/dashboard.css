@@ -553,3 +553,105 @@ body {
     min-width: 420px;
   }
 }
+/* Form Container */
+.recent#exam-room-table {
+  width: 100%;
+  max-width: 400px;
+  margin: 40px auto;
+  padding: 30px;
+  background-color: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+/* Form Layout */
+.recent#exam-room-table form {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Field Container (p tag from form.as_p) */
+.recent#exam-room-table p {
+  position: relative;
+  width: 100%;
+  height: 60px;
+  margin: 0;
+}
+
+/* Input Fields */
+.recent#exam-room-table input {
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  border: 1px solid #dee2e6;
+  border-radius: 5px;
+  outline: none;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease, padding 0.2s ease;
+  color: #212529;
+  box-sizing: border-box;
+  background-color: #ffffff;
+}
+
+/* Input with Value or Focused (Adjust Padding for Floating Label) */
+.recent#exam-room-table input:not(:placeholder-shown),
+.recent#exam-room-table input:focus {
+  padding: 20px 12px 10px;
+}
+
+/* Input Focus State */
+.recent#exam-room-table input:focus {
+  border-color: #00bcd4;
+  box-shadow: 0 0 5px rgba(0, 188, 212, 0.3);
+}
+
+/* Labels */
+.recent#exam-room-table label {
+  position: absolute;
+  top: 50%;
+  left: 12px;
+  transform: translateY(-50%);
+  color: #676767;
+  font-size: 1rem;
+  pointer-events: none;
+  transition: all 0.2s ease;
+}
+
+/* Remove the colon (:) after the label */
+.recent#exam-room-table label::after {
+  content: none;
+}
+
+/* Label When Input Has Value or Is Focused */
+.recent#exam-room-table input:not(:placeholder-shown) + label,
+.recent#exam-room-table input:focus + label {
+  top: 0;
+  transform: translateY(-50%);
+  color: #00bcd4;
+  font-size: 0.8rem;
+}
+
+/* Submit Button */
+.recent#exam-room-table button {
+  width: 100%;
+  padding: 12px 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #ffffff;
+  background-color: #00bcd4;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: background 0.3s ease, transform 0.2s ease, box-shadow 0.3s ease;
+  margin-top: 20px;
+}
+
+/* Button Hover State */
+.recent#exam-room-table button:hover {
+  background-color: #0097a7;
+  transform: scale(1.05);
+  box-shadow: 0 4px 15px rgba(0, 151, 167, 0.3);
+}
