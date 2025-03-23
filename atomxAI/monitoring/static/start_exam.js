@@ -8,12 +8,14 @@ let logArray = []; // Array to store logs
 
 const loadingBar = document.getElementById("loadingBar");
 const contentContainer = document.getElementById("contentContainer");
+const instructionsContainer = document.getElementById("instructionsContainer");
 const googleFormContainer = document.getElementById("googleFormContainer");
 const startExamButton = document.getElementById("startExamButton");
 const endExamButton = document.getElementById("endExamButton");
 const endExamForm = document.getElementById("endExamForm");
 const timerDisplay = document.getElementById("timeRemaining");
 const timerContainer = document.getElementById("timer");
+const loadingSpinner = document.getElementById("loadingSpinner");
 
 let timerInterval;
 
@@ -21,10 +23,11 @@ let timerInterval;
 contentContainer.style.display = 'none';
 googleFormContainer.style.display = 'none';
 endExamButton.style.display = 'none'; // Hide the End Exam button
+loadingSpinner.style.display = 'none'; // Hide the loading spinner initially
 
-// Show the Start Exam button after loading
+// Show the Start Exam button after initial loading
 setTimeout(() => {
-    loadingBar.style.display = 'none'; // Hide the loading bar
+    loadingBar.style.display = 'none'; // Hide the initial loading bar
     startExamButton.style.display = 'block'; // Show the Start Exam button
 }, 5000); // 5000 milliseconds = 5 seconds
 
@@ -35,124 +38,129 @@ async function startMonitoring() {
     const video = document.getElementById("videoElement");
     const statusElement = document.getElementById("status");
 
-    // Load the BlazeFace model for face detection and Coco-SSD for object detection
-    const faceModel = await blazeface.load();
-    const objectModel = await cocoSsd.load();
+    // Show the loading spinner
+    loadingSpinner.style.display = 'flex';
+    instructionsContainer.style.display = 'none'; // Hide instructions while loading
 
-    // Hide the loading bar and show the content container
-    contentContainer.style.display = 'flex';
-    googleFormContainer.style.display = 'block'; // Show the Google Form
+    try {
+        // Load the BlazeFace model for face detection and Coco-SSD for object detection
+        const faceModel = await blazeface.load();
+        const objectModel = await cocoSsd.load();
 
-    // Access the user's webcam
-    navigator.mediaDevices
-        .getUserMedia({ video: true })
-        .then(function (stream) {
-            videoStream = stream;
-            video.srcObject = stream;
-            video.play();
-            statusElement.innerText = "Models loaded. Monitoring...";
+        // Access the user's webcam
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
 
-            // Start the timer once the Google Form is displayed
-            startTimer();
-        })
-        .catch(function (err) {
-            console.log("Error accessing webcam: ", err);
-            statusElement.innerText = "Error accessing webcam.";
-        });
+        // If everything is loaded successfully, hide the spinner and show the content
+        loadingSpinner.style.display = 'none';
+        contentContainer.style.display = 'block';
+        googleFormContainer.style.display = 'block'; // Show the Google Form
 
-    // Lock the browser as soon as the monitoring starts
-    lockBrowser();
+        videoStream = stream;
+        video.srcObject = stream;
+        video.play();
+        statusElement.innerText = "Models loaded. Monitoring...";
 
-    video.addEventListener("loadeddata", async () => {
-        while (isMonitoring) {
-            let logMessage = "";
+        // Start the timer once the Google Form is displayed
+        startTimer();
 
-            // Face detection
-            const faces = await faceModel.estimateFaces(video, false);
+        // Lock the browser as soon as the monitoring starts
+        lockBrowser();
 
-            // Check for multiple faces on the screen
-            if (faces.length > 1) {
-                if (!multiplePeopleWarningLogged) {
-                    logMessage = "Warning: Multiple people detected!";
-                    logActivity(logMessage, "high");
-                    multiplePeopleWarningLogged = true; // Set log flag
-                }
-            } else {
-                multiplePeopleWarningLogged = false; // Reset if only one person is in the frame
-            }
+        video.addEventListener("loadeddata", async () => {
+            while (isMonitoring) {
+                let logMessage = "";
 
-            // Check if no face is detected
-            if (faces.length === 0) {
-                if (faceDetected) {
-                    logMessage = "No face detected. Please stay in front of the camera.";
-                    logActivity(logMessage, "high");
-                    faceDetected = false; // Reset log flag
-                }
-            } else {
-                if (!faceDetected) {
-                    logMessage = "Face detected. Monitoring...";
-                    logActivity(logMessage, "low");
-                    faceDetected = true; // Set log flag
-                }
+                // Face detection
+                const faces = await faceModel.estimateFaces(video, false);
 
-                // Check gaze direction if face is detected
-                const face = faces[0];
-                const rightEye = face.rightEye;
-                const leftEye = face.leftEye;
-
-                if (rightEye && leftEye) {
-                    const eyeCenter = [
-                        (rightEye[0] + leftEye[0]) / 2,
-                        (rightEye[1] + leftEye[1]) / 2,
-                    ];
-
-                    // Adjust these thresholds based on your video dimensions
-                    const gazeThresholdX = video.videoWidth / 5; // 20% of width
-                    const gazeThresholdY = video.videoHeight / 5; // 20% of height
-
-                    // Check if the gaze is outside the designated area
-                    if (
-                        eyeCenter[0] < gazeThresholdX ||
-                        eyeCenter[0] > video.videoWidth - gazeThresholdX ||
-                        eyeCenter[1] < gazeThresholdY ||
-                        eyeCenter[1] > video.videoHeight - gazeThresholdY
-                    ) {
-                        if (!gazeWarningLogged) {
-                            logMessage = "Warning: You are looking away from the screen!";
-                            logActivity(logMessage, "medium");
-                            gazeWarningLogged = true; // Set log flag
-                        }
-                    } else {
-                        gazeWarningLogged = false; // Reset if looking back
-                    }
-                }
-            }
-
-            // Object detection
-            const predictions = await objectModel.detect(video);
-
-            let foundUnauthorizedObject = false;
-
-            predictions.forEach((prediction) => {
-                const objectName = prediction.class;
-
-                if (objectName === "cell phone" || objectName === "laptop") {
-                    foundUnauthorizedObject = true;
-                    if (!unauthorizedObjectDetected) {
-                        logMessage = `Warning: Unauthorized object detected: ${objectName}`;
+                // Check for multiple faces on the screen
+                if (faces.length > 1) {
+                    if (!multiplePeopleWarningLogged) {
+                        logMessage = "Warning: Multiple people detected!";
                         logActivity(logMessage, "high");
-                        unauthorizedObjectDetected = true; // Set log flag
+                        multiplePeopleWarningLogged = true; // Set log flag
+                    }
+                } else {
+                    multiplePeopleWarningLogged = false; // Reset if only one person is in the frame
+                }
+
+                // Check if no face is detected
+                if (faces.length === 0) {
+                    if (faceDetected) {
+                        logMessage = "No face detected. Please stay in front of the camera.";
+                        logActivity(logMessage, "high");
+                        faceDetected = false; // Reset log flag
+                    }
+                } else {
+                    if (!faceDetected) {
+                        logMessage = "Face detected. Monitoring...";
+                        logActivity(logMessage, "low");
+                        faceDetected = true; // Set log flag
+                    }
+
+                    // Check gaze direction if face is detected
+                    const face = faces[0];
+                    const rightEye = face.rightEye;
+                    const leftEye = face.leftEye;
+
+                    if (rightEye && leftEye) {
+                        const eyeCenter = [
+                            (rightEye[0] + leftEye[0]) / 2,
+                            (rightEye[1] + leftEye[1]) / 2,
+                        ];
+
+                        // Adjust these thresholds based on your video dimensions
+                        const gazeThresholdX = video.videoWidth / 5; // 20% of width
+                        const gazeThresholdY = video.videoHeight / 5; // 20% of height
+
+                        // Check if the gaze is outside the designated area
+                        if (
+                            eyeCenter[0] < gazeThresholdX ||
+                            eyeCenter[0] > video.videoWidth - gazeThresholdX ||
+                            eyeCenter[1] < gazeThresholdY ||
+                            eyeCenter[1] > video.videoHeight - gazeThresholdY
+                        ) {
+                            if (!gazeWarningLogged) {
+                                logMessage = "Warning: You are looking away from the screen!";
+                                logActivity(logMessage, "medium");
+                                gazeWarningLogged = true; // Set log flag
+                            }
+                        } else {
+                            gazeWarningLogged = false; // Reset if looking back
+                        }
                     }
                 }
-            });
 
-            if (!foundUnauthorizedObject) {
-                unauthorizedObjectDetected = false; // Reset flag if no unauthorized objects found
+                // Object detection
+                const predictions = await objectModel.detect(video);
+
+                let foundUnauthorizedObject = false;
+
+                predictions.forEach((prediction) => {
+                    const objectName = prediction.class;
+
+                    if (objectName === "cell phone" || objectName === "laptop") {
+                        foundUnauthorizedObject = true;
+                        if (!unauthorizedObjectDetected) {
+                            logMessage = `Warning: Unauthorized object detected: ${objectName}`;
+                            logActivity(logMessage, "high");
+                            unauthorizedObjectDetected = true; // Set log flag
+                        }
+                    }
+                });
+
+                if (!foundUnauthorizedObject) {
+                    unauthorizedObjectDetected = false; // Reset flag if no unauthorized objects found
+                }
+
+                await tf.nextFrame(); // Continue looping for real-time detection
             }
-
-            await tf.nextFrame(); // Continue looping for real-time detection
-        }
-    });
+        });
+    } catch (err) {
+        console.log("Error during setup: ", err);
+        statusElement.innerText = "Error setting up exam environment.";
+        loadingSpinner.style.display = 'none'; // Hide spinner on error
+    }
 
     // Tab switch or minimize detection
     document.addEventListener("visibilitychange", () => {
@@ -192,7 +200,6 @@ function startTimer() {
 function handleStartExam() {
     requestFullScreen(); // Request full-screen mode
     startExamButton.style.display = 'none'; // Hide the Start Exam button
-    contentContainer.style.display = 'flex'; // Show the content
     endExamButton.style.display = 'block'; // Show the End Exam button
     startMonitoring(); // Start monitoring the exam process
 }
@@ -252,7 +259,7 @@ function logActivity(message, severity) {
     
     // Display the log on the screen
     const logEntry = document.createElement("div");
-    logEntry.className = severityClass; // Set severity class for styling
+    logEntry.className = `log-entry ${severityClass}`; // Set severity class for styling
     logEntry.innerText = `[${timestamp}] ${message}`;
     logElement.appendChild(logEntry);
     
@@ -266,7 +273,6 @@ function handleEndExam() {
     endExamButton.style.display = 'none'; // Hide the End Exam button
     endExamForm.style.display = 'block'; // Show the End Exam form for submission
 }
-
 
 // Attach event listeners
 startExamButton.addEventListener("click", handleStartExam);

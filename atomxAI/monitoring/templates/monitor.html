@@ -36,6 +36,33 @@
             <p class="error">{{ error }}</p>
             {% endif %}
         </div>
+        <div class="instructions-container">
+            <div class="instruction fade-in-slide" style="animation-delay: 0s;">
+                <h3>Time Limit</h3>
+                <p>You have 30 minutes to complete the test. Each question has an individual time limit shown in the question header. The timer will start when you click "Start Test."</p>
+            </div>
+            <div class="instruction fade-in-slide" style="animation-delay: 2s;">
+                <h3>Suspicious Activity Monitoring</h3>
+                <p>The following activities will be detected as suspicious:</p>
+                <ul>
+                    <li>Tab switching (limited to 3 times)</li>
+                    <li>Copy/paste attempts</li>
+                    <li>Screenshot attempts</li>
+                    <li>Unnatural typing patterns</li>
+                    <li>Window resizing or minimizing (will automatically submit your test)</li>
+                    <li>Right-clicking</li>
+                </ul>
+            </div>
+            <div class="instruction fade-in-slide" style="animation-delay: 4s;">
+                <h3>Risk Level</h3>
+                <p>Suspicious activities will increase your risk level. If your risk level is too high, your submission might be flagged or rejected.</p>
+            </div>
+            <div class="instruction fade-in-slide" style="animation-delay: 6s;">
+                <h3>Window Size Requirements</h3>
+                <p>The test must be taken in full-screen mode. Reducing window size after starting will automatically submit your test.</p>
+                <p class="highlight">KEEP YOUR SCREEN SIZE UNCHANGED - resizing will automatically submit the test!</p>
+            </div>
+        </div>
     </div>
 
     <script type="text/javascript">

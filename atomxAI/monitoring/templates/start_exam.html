@@ -12,32 +12,78 @@
     <script src="{% static 'start_exam.js' %}" defer></script>
 </head>
 <body>
-    <h2>Start Exam</h2>
+    <div class="main-container">
+        <h2 class="fade-in">Start Exam</h2>
 
+        <div class="loader" id="loadingBar"></div>
 
-    <div class="loader" id="loadingBar"></div>
-
-    <div id="timer" style="display: none;">
-        Time Remaining: <span id="timeRemaining">00:00</span>
-    </div>
-    
-
-    <div style="display: none;" id="contentContainer"> 
-        <div id="video-container" style="flex: 1; padding-right: 20px;">
-            <video id="videoElement" playsinline autoplay muted></video>
-            <div id="status">Loading AI models...</div>
-            <div id="log">Activity Log:</div>
+        <div class="button-container">
+            <button id="startExamButton" style="display: none;" class="scale-up">Start Exam</button> 
+            <button id="endExamButton" style="display: none;" class="scale-up">End Exam</button> 
         </div>
-        <div id="googleFormContainer" style="display: none;">
-            <iframe src="{{ google_form_link }}" width="100%" height="600" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
+
+        <div class="instructions-container" id="instructionsContainer">
+            <div class="instruction fade-in-slide" style="animation-delay: 0s;">
+                <h3>Time Limit</h3>
+                <p>You have 30 minutes to complete the test. Each question has an individual time limit shown in the question header. The timer will start when you click "Start Test."</p>
+            </div>
+            <div class="instruction fade-in-slide" style="animation-delay: 2s;">
+                <h3>Suspicious Activity Monitoring</h3>
+                <p>The following activities will be detected as suspicious:</p>
+                <ul>
+                    <li>Tab switching (limited to 3 times)</li>
+                    <li>Copy/paste attempts</li>
+                    <li>Screenshot attempts</li>
+                    <li>Unnatural typing patterns</li>
+                    <li>Window resizing or minimizing (will automatically submit your test)</li>
+                    <li>Right-clicking</li>
+                </ul>
+            </div>
+            <div class="instruction fade-in-slide" style="animation-delay: 4s;">
+                <h3>Risk Level</h3>
+                <p>Suspicious activities will increase your risk level. If your risk level is too high, your submission might be flagged or rejected.</p>
+            </div>
+            <div class="instruction fade-in-slide" style="animation-delay: 6s;">
+                <h3>Window Size Requirements</h3>
+                <p>The test must be taken in full-screen mode. Reducing window size after starting will automatically submit your test.</p>
+                <p class="highlight">KEEP YOUR SCREEN SIZE UNCHANGED - resizing will automatically submit the test!</p>
+            </div>
         </div>
+
+        <!-- Loading Spinner -->
+        <div class="loading-spinner" id="loadingSpinner" style="display: none;">
+            <div class="spinner"></div>
+            <p>Loading exam environment...</p>
+        </div>
+
+        <div id="timer" style="display: none;">
+            Time Remaining: <span id="timeRemaining">00:00</span>
+        </div>
+
+        <div style="display: none;" id="contentContainer" class="fade-in"> 
+            <div class="layout-container">
+                <div class="left-panel">
+                    <div id="log-container">
+                        <h3>Activity Log</h3>
+                        <div id="log"></div>
+                    </div>
+                </div>
+                <div class="center-panel">
+                    <div id="googleFormContainer" style="display: none;">
+                        <iframe src="{{ google_form_link }}" width="100%" height="600" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
+                    </div>
+                </div>
+                <div class="right-panel">
+                    <div id="video-container">
+                        <video id="videoElement" playsinline autoplay muted></video>
+                        <div id="status">Loading AI models...</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <p class="fade-in">Good luck!</p>
     </div>
-
-    <br>
-    <button id="startExamButton" style="display: none;">Start Exam</button> 
-    <button id="endExamButton" style="display: none;">End Exam</button> 
-
-    <p>Good luck!</p>
 
     <script>
         let timerDuration = {{ exam_duration }} * 60;
@@ -66,7 +112,6 @@
             }).catch(error => {
                 console.error('Error occurred while sending logs:', error);
             });
-
         });
     </script>
 </body>
