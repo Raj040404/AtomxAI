@@ -25,7 +25,7 @@
         <div class="instructions-container" id="instructionsContainer">
             <div class="instruction fade-in-slide" style="animation-delay: 0s;">
                 <h3>Time Limit</h3>
-                <p>You have 30 minutes to complete the test. Each question has an individual time limit shown in the question header. The timer will start when you click "Start Test."</p>
+                <p>You have {{ exam_duration }} minutes to complete the test. The timer will start when you click "Start Exam."</p>
             </div>
             <div class="instruction fade-in-slide" style="animation-delay: 2s;">
                 <h3>Suspicious Activity Monitoring</h3>
@@ -50,7 +50,6 @@
             </div>
         </div>
 
-        <!-- Loading Spinner -->
         <div class="loading-spinner" id="loadingSpinner" style="display: none;">
             <div class="spinner"></div>
             <p>Loading exam environment...</p>
@@ -69,9 +68,24 @@
                     </div>
                 </div>
                 <div class="center-panel">
+                    {% if parsed_questions %}
+                    <div id="examFormContainer" style="display: none;">
+                        <form id="examForm" class="exam-form">
+                            <h1 class="exam-heading">{{ parsed_questions.heading }}</h1>
+                            {% for question in parsed_questions.questions %}
+                            <div class="question-item slide-in" style="animation-delay: {{ forloop.counter|add:'-1'|floatformat:'0' }}s;">
+                                <label>{{ forloop.counter }}. {{ question }}</label>
+                                <input type="text" name="question_{{ forloop.counter }}" placeholder="Your answer" required>
+                            </div>
+                            {% endfor %}
+                            <button type="submit" style="display: none;">Submit</button>
+                        </form>
+                    </div>
+                    {% else %}
                     <div id="googleFormContainer" style="display: none;">
                         <iframe src="{{ google_form_link }}" width="100%" height="600" frameborder="0" marginheight="0" marginwidth="0">Loading…</iframe>
                     </div>
+                    {% endif %}
                 </div>
                 <div class="right-panel">
                     <div id="video-container">
@@ -86,32 +100,120 @@
     </div>
 
     <script>
-        let timerDuration = {{ exam_duration }} * 60;
+        let timerDuration = "{{ exam_duration }}" * 60;
+        const roomCode = "{{ room_code }}";
+        const rollNumber = "{{ roll_number }}";
+        const isCustomForm = "{% if parsed_questions %}true{% else %}false{% endif %}";
 
-        document.getElementById('endExamButton').addEventListener('click', function() {
-            const roomCode = "{{ room_code }}";
-            const rollNumber = "{{ roll_number }}";
+        document.addEventListener('DOMContentLoaded', function () {
+            const endExamButton = document.getElementById('endExamButton');
+            const examForm = document.getElementById('examForm');
 
-            // Prepare form data
-            const formData = new FormData();
-            formData.append('log', JSON.stringify(logArray));
-            formData.append('roll_number', rollNumber);
-            formData.append('room_code', roomCode);
+            // Handle "End Exam" button click
+            endExamButton.addEventListener('click', function (event) {
+                event.preventDefault();
 
-            // Send logs to the server
-            fetch(`{% url 'end_exam' room_code=room_code roll_number=roll_number %}`, {
-                method: 'POST',
-                body: formData
-            }).then(response => {
-                if (response.ok) {
-                    // Redirect to login/signup view after successful exam completion
-                    window.location.href = "{% url 'login_signup_view' %}";
+                if (isCustomForm === "true") {
+                    // Collect answers from the form
+                    const formData = new FormData(examForm);
+                    const answers = {};
+                    let questionCount = 0;
+
+                    // Iterate through form inputs to collect answers
+                    formData.forEach((value, key) => {
+                        if (key.startsWith('question_')) {
+                            const questionNumber = key.split('_')[1];
+                            answers[questionNumber] = value;
+                            questionCount++;
+                        }
+                    });
+
+                    // Prepare data to send to the server
+                    const data = {
+                        room_code: roomCode,
+                        roll_number: rollNumber,
+                        answers: answers,
+                        question_count: questionCount
+                    };
+
+                    // First, submit the answers
+                    fetch('/users/submit_exam_answers/', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify(data)
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status !== 'success') {
+                            throw new Error(data.message);
+                        }
+                        // After submitting answers, call the end_exam endpoint
+                        return fetch(`/users/exam/${roomCode}/${rollNumber}/end_exam/`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRFToken': getCookie('csrftoken')
+                            },
+                            body: JSON.stringify({})
+                        });
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            // Redirect to the root URL (which redirects to /monitoring/)
+                            window.location.href = '/';
+                        } else {
+                            alert('Error ending exam: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred: ' + error.message);
+                    });
                 } else {
-                    console.error('Failed to send logs:', response.statusText); 
+                    // For Google Forms, just call end_exam and redirect
+                    fetch(`/users/exam/${roomCode}/${rollNumber}/end_exam/`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': getCookie('csrftoken')
+                        },
+                        body: JSON.stringify({})
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.status === 'success') {
+                            // Redirect to the root URL (which redirects to /monitoring/)
+                            window.location.href = '/';
+                        } else {
+                            alert('Error ending exam: ' + data.message);
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error ending exam:', error);
+                        alert('An error occurred while ending the exam.');
+                    });
                 }
-            }).catch(error => {
-                console.error('Error occurred while sending logs:', error);
             });
+
+            // Function to get CSRF token from cookies
+            function getCookie(name) {
+                let cookieValue = null;
+                if (document.cookie && document.cookie !== '') {
+                    const cookies = document.cookie.split(';');
+                    for (let i = 0; i < cookies.length; i++) {
+                        const cookie = cookies[i].trim();
+                        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                            cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                            break;
+                        }
+                    }
+                }
+                return cookieValue;
+            }
         });
     </script>
 </body>

@@ -1,4 +1,3 @@
-# urls.py in 'monitoring' app
 from django.urls import path
 from . import views
 

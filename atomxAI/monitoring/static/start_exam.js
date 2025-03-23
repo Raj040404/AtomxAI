@@ -4,32 +4,31 @@ let gazeWarningLogged = false;
 let videoStream = null;
 let isMonitoring = false;
 let multiplePeopleWarningLogged = false;
-let logArray = []; // Array to store logs
+let logArray = [];
 
 const loadingBar = document.getElementById("loadingBar");
 const contentContainer = document.getElementById("contentContainer");
 const instructionsContainer = document.getElementById("instructionsContainer");
+const examFormContainer = document.getElementById("examFormContainer");
 const googleFormContainer = document.getElementById("googleFormContainer");
 const startExamButton = document.getElementById("startExamButton");
 const endExamButton = document.getElementById("endExamButton");
-const endExamForm = document.getElementById("endExamForm");
 const timerDisplay = document.getElementById("timeRemaining");
 const timerContainer = document.getElementById("timer");
 const loadingSpinner = document.getElementById("loadingSpinner");
 
 let timerInterval;
 
-// Initially hide the content containers
 contentContainer.style.display = 'none';
-googleFormContainer.style.display = 'none';
-endExamButton.style.display = 'none'; // Hide the End Exam button
-loadingSpinner.style.display = 'none'; // Hide the loading spinner initially
+if (examFormContainer) examFormContainer.style.display = 'none';
+if (googleFormContainer) googleFormContainer.style.display = 'none';
+endExamButton.style.display = 'none';
+loadingSpinner.style.display = 'none';
 
-// Show the Start Exam button after initial loading
 setTimeout(() => {
-    loadingBar.style.display = 'none'; // Hide the initial loading bar
-    startExamButton.style.display = 'block'; // Show the Start Exam button
-}, 5000); // 5000 milliseconds = 5 seconds
+    loadingBar.style.display = 'none';
+    startExamButton.style.display = 'block';
+}, 5000);
 
 async function startMonitoring() {
     if (isMonitoring) return;
@@ -38,82 +37,64 @@ async function startMonitoring() {
     const video = document.getElementById("videoElement");
     const statusElement = document.getElementById("status");
 
-    // Show the loading spinner
     loadingSpinner.style.display = 'flex';
-    instructionsContainer.style.display = 'none'; // Hide instructions while loading
+    instructionsContainer.style.display = 'none';
 
     try {
-        // Load the BlazeFace model for face detection and Coco-SSD for object detection
         const faceModel = await blazeface.load();
         const objectModel = await cocoSsd.load();
-
-        // Access the user's webcam
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
 
-        // If everything is loaded successfully, hide the spinner and show the content
         loadingSpinner.style.display = 'none';
         contentContainer.style.display = 'block';
-        googleFormContainer.style.display = 'block'; // Show the Google Form
+        if (isCustomForm && examFormContainer) {
+            examFormContainer.style.display = 'block';
+        } else if (googleFormContainer) {
+            googleFormContainer.style.display = 'block';
+        }
 
         videoStream = stream;
         video.srcObject = stream;
         video.play();
         statusElement.innerText = "Models loaded. Monitoring...";
 
-        // Start the timer once the Google Form is displayed
         startTimer();
-
-        // Lock the browser as soon as the monitoring starts
         lockBrowser();
 
         video.addEventListener("loadeddata", async () => {
             while (isMonitoring) {
                 let logMessage = "";
-
-                // Face detection
                 const faces = await faceModel.estimateFaces(video, false);
 
-                // Check for multiple faces on the screen
                 if (faces.length > 1) {
                     if (!multiplePeopleWarningLogged) {
                         logMessage = "Warning: Multiple people detected!";
                         logActivity(logMessage, "high");
-                        multiplePeopleWarningLogged = true; // Set log flag
+                        multiplePeopleWarningLogged = true;
                     }
                 } else {
-                    multiplePeopleWarningLogged = false; // Reset if only one person is in the frame
+                    multiplePeopleWarningLogged = false;
                 }
 
-                // Check if no face is detected
                 if (faces.length === 0) {
                     if (faceDetected) {
                         logMessage = "No face detected. Please stay in front of the camera.";
                         logActivity(logMessage, "high");
-                        faceDetected = false; // Reset log flag
+                        faceDetected = false;
                     }
                 } else {
                     if (!faceDetected) {
                         logMessage = "Face detected. Monitoring...";
                         logActivity(logMessage, "low");
-                        faceDetected = true; // Set log flag
+                        faceDetected = true;
                     }
-
-                    // Check gaze direction if face is detected
                     const face = faces[0];
                     const rightEye = face.rightEye;
                     const leftEye = face.leftEye;
-
                     if (rightEye && leftEye) {
-                        const eyeCenter = [
-                            (rightEye[0] + leftEye[0]) / 2,
-                            (rightEye[1] + leftEye[1]) / 2,
-                        ];
-
-                        // Adjust these thresholds based on your video dimensions
-                        const gazeThresholdX = video.videoWidth / 5; // 20% of width
-                        const gazeThresholdY = video.videoHeight / 5; // 20% of height
-
-                        // Check if the gaze is outside the designated area
+                        const eyeCenter = [(rightEye[0] + leftEye[0]) / 2, (rightEye[1] + leftEye[1]) / 2];
+                        const gazeThresholdX = video.videoWidth / 5;
+                        const gazeThresholdY = video.videoHeight / 5;
                         if (
                             eyeCenter[0] < gazeThresholdX ||
                             eyeCenter[0] > video.videoWidth - gazeThresholdX ||
@@ -123,69 +104,56 @@ async function startMonitoring() {
                             if (!gazeWarningLogged) {
                                 logMessage = "Warning: You are looking away from the screen!";
                                 logActivity(logMessage, "medium");
-                                gazeWarningLogged = true; // Set log flag
+                                gazeWarningLogged = true;
                             }
                         } else {
-                            gazeWarningLogged = false; // Reset if looking back
+                            gazeWarningLogged = false;
                         }
                     }
                 }
 
-                // Object detection
                 const predictions = await objectModel.detect(video);
-
                 let foundUnauthorizedObject = false;
-
                 predictions.forEach((prediction) => {
-                    const objectName = prediction.class;
-
-                    if (objectName === "cell phone" || objectName === "laptop") {
+                    if (prediction.class === "cell phone" || prediction.class === "laptop") {
                         foundUnauthorizedObject = true;
                         if (!unauthorizedObjectDetected) {
-                            logMessage = `Warning: Unauthorized object detected: ${objectName}`;
+                            logMessage = `Warning: Unauthorized object detected: ${prediction.class}`;
                             logActivity(logMessage, "high");
-                            unauthorizedObjectDetected = true; // Set log flag
+                            unauthorizedObjectDetected = true;
                         }
                     }
                 });
-
                 if (!foundUnauthorizedObject) {
-                    unauthorizedObjectDetected = false; // Reset flag if no unauthorized objects found
+                    unauthorizedObjectDetected = false;
                 }
 
-                await tf.nextFrame(); // Continue looping for real-time detection
+                await tf.nextFrame();
             }
         });
     } catch (err) {
         console.log("Error during setup: ", err);
         statusElement.innerText = "Error setting up exam environment.";
-        loadingSpinner.style.display = 'none'; // Hide spinner on error
+        loadingSpinner.style.display = 'none';
     }
 
-    // Tab switch or minimize detection
     document.addEventListener("visibilitychange", () => {
         if (document.visibilityState === "hidden") {
-            logActivity(
-                "Warning: You have switched tabs or minimized the browser!",
-                "high"
-            );
+            logActivity("Warning: You have switched tabs or minimized the browser!", "high");
         }
     });
 }
 
-// Timer function
 function startTimer() {
-    timerContainer.style.display = 'block'; // Show the timer display
+    timerContainer.style.display = 'block';
     let remainingTime = timerDuration;
 
-    // Update the timer display every second
     timerInterval = setInterval(() => {
         if (remainingTime <= 0) {
             clearInterval(timerInterval);
             logActivity("Time is up!", "high");
-            stopMonitoring(); // Stop monitoring when time is up
-            endExamForm.style.display = 'block'; // Show the End Exam form for submission
-            endExamButton.style.display = 'none'; // Hide the End Exam button
+            stopMonitoring();
+            handleEndExam();
             return;
         }
 
@@ -193,87 +161,96 @@ function startTimer() {
         const seconds = remainingTime % 60;
         timerDisplay.innerText = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
         remainingTime--;
-    }, 1000); // Update every second
+    }, 1000);
 }
 
-// Function to handle exam start button click
-function handleStartExam() {
-    requestFullScreen(); // Request full-screen mode
-    startExamButton.style.display = 'none'; // Hide the Start Exam button
-    endExamButton.style.display = 'block'; // Show the End Exam button
-    startMonitoring(); // Start monitoring the exam process
-}
-
-// Fullscreen function
 function requestFullScreen() {
     const elem = document.documentElement;
     if (elem.requestFullscreen) {
         elem.requestFullscreen();
-    } else if (elem.mozRequestFullScreen) { // Firefox
+    } else if (elem.mozRequestFullScreen) {
         elem.mozRequestFullScreen();
-    } else if (elem.webkitRequestFullscreen) { // Chrome, Safari and Opera
+    } else if (elem.webkitRequestFullscreen) {
         elem.webkitRequestFullscreen();
-    } else if (elem.msRequestFullscreen) { // IE/Edge
+    } else if (elem.msRequestFullscreen) {
         elem.msRequestFullscreen();
     }
 }
 
 function lockBrowser() {
-    // Disable right-click context menu
-    document.addEventListener("contextmenu", (event) => {
-        event.preventDefault();
-    });
-
-    // Disable keyboard shortcuts for copying text (e.g., Ctrl+C, Ctrl+V, Ctrl+X)
+    document.addEventListener("contextmenu", (event) => event.preventDefault());
     document.addEventListener("keydown", (event) => {
         if (
             event.ctrlKey &&
             (event.key === "c" || event.key === "v" || event.key === "x")
         ) {
-            event.preventDefault(); // Prevent copy, paste, cut
+            event.preventDefault();
         }
     });
-
-    // Prevent text selection
-    document.addEventListener("selectstart", (event) => {
-        event.preventDefault(); // Prevent text selection
-    });
+    document.addEventListener("selectstart", (event) => event.preventDefault());
 }
 
 function stopMonitoring() {
     isMonitoring = false;
     if (videoStream) {
-        const tracks = videoStream.getTracks();
-        tracks.forEach((track) => track.stop());
+        videoStream.getTracks().forEach((track) => track.stop());
     }
     document.getElementById("videoElement").srcObject = null;
     document.getElementById("status").innerText = "Monitoring stopped.";
-    clearInterval(timerInterval); // Clear the timer when stopping monitoring
+    clearInterval(timerInterval);
+    contentContainer.style.display = 'none';
+    if (examFormContainer) examFormContainer.style.display = 'none';
+    if (googleFormContainer) googleFormContainer.style.display = 'none';
+    endExamButton.style.display = 'none';
 }
 
-// Log activity in the UI and store in logArray
 function logActivity(message, severity) {
     const logElement = document.getElementById("log");
-    const timestamp = new Date().toLocaleTimeString(); // Generate a timestamp
-    const severityClass = `severity-${severity}`; // Define severity styles
+    const timestamp = new Date().toLocaleTimeString();
+    const severityClass = `severity-${severity}`;
     
-    // Display the log on the screen
     const logEntry = document.createElement("div");
-    logEntry.className = `log-entry ${severityClass}`; // Set severity class for styling
+    logEntry.className = `log-entry ${severityClass}`;
     logEntry.innerText = `[${timestamp}] ${message}`;
     logElement.appendChild(logEntry);
     
-    // Store the log message along with its timestamp in the array
     logArray.push(`[${timestamp}] ${message}`);
 }
 
-// Function to handle exam end button click
-function handleEndExam() {
-    stopMonitoring(); // Stop monitoring the exam process
-    endExamButton.style.display = 'none'; // Hide the End Exam button
-    endExamForm.style.display = 'block'; // Show the End Exam form for submission
+function handleStartExam() {
+    requestFullScreen();
+    startExamButton.style.display = 'none';
+    endExamButton.style.display = 'block';
+    startMonitoring();
 }
 
-// Attach event listeners
+function handleEndExam() {
+    let answers = {};
+    if (isCustomForm && examFormContainer) {
+        const form = document.getElementById("examForm");
+        const formData = new FormData(form);
+        formData.forEach((value, key) => {
+            const questionNum = key.split('_')[1];
+            const questionText = form.querySelector(`input[name="${key}"]`).previousElementSibling.innerText.split('. ')[1];
+            answers[questionText] = value;
+        });
+    }
+
+    stopMonitoring();
+    fetch(`/exam/${roomCode}/${rollNumber}/end_exam/`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ log: logArray, answers })
+    }).then(response => {
+        if (response.ok) {
+            window.location.href = "/";
+        } else {
+            console.error('Failed to submit exam:', response.statusText);
+        }
+    }).catch(error => {
+        console.error('Error submitting exam:', error);
+    });
+}
+
 startExamButton.addEventListener("click", handleStartExam);
 endExamButton.addEventListener("click", handleEndExam);

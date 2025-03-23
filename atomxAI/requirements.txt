@@ -1,0 +1,8 @@
+asgiref==3.8.1
+Django==5.1.1
+sqlparse==0.5.1
+tzdata==2024.1
+PyPDF2==3.0.1  # For PDF text extraction
+python-docx==1.1.2  # For .docx text extraction
+Pillow==10.4.0  # For image processing
+pytesseract==0.3.13  # For OCR (text extraction from images)
